@@ -15,8 +15,8 @@ namespace FluidSimulator
     public class FluidSimulator
     {
         private RenderWindow _renderWindow;
-
         private Stopwatch _clock;
+        private List<Particle> _particles;
 
         public FluidSimulator()
         {
@@ -27,6 +27,14 @@ namespace FluidSimulator
             _renderWindow = new RenderWindow(vmRenderWindow, "C# - SFML - FluidSimulator - RenderWindow", Styles.Close, State.Windowed);
             _renderWindow.SetVerticalSyncEnabled(true);
             _renderWindow.Closed += CloseRenderWindow;
+
+            _particles = new List<Particle>();
+
+            Particle part_test = new Particle(new Vector2f(100.0f, 100.0f));
+            part_test.Direction = Angle.FromDegrees(90.0f);
+            part_test.Velocity = 9.81f;
+
+            _particles.Add(part_test);
         }
 
         public void Run(bool debug = false)
@@ -39,11 +47,15 @@ namespace FluidSimulator
 
                 if(_clock.ElapsedMilliseconds >= Config.FRAME_DURATION)
                 {
-                    _clock.Restart();
+                    UpdateParticles();
 
                     _renderWindow.Clear(Color.Black);
 
+                    DrawParticles();
+
                     _renderWindow.Display();
+
+                    _clock.Restart();
                 }
             }
         }
@@ -51,6 +63,28 @@ namespace FluidSimulator
         private void CloseRenderWindow(object? sender, EventArgs e)
         {
             _renderWindow.Close();
+        }
+
+        private void UpdateParticles()
+        {
+            foreach(Particle part in _particles)
+            {
+                Vector2f position = part.Position;
+
+                Vector2f move = new Vector2f(part.Velocity, part.Direction);
+
+                position += move;
+
+                part.Position = position;
+            }
+        }
+
+        private void DrawParticles()
+        {
+            foreach(Particle particle in _particles)
+            {
+                _renderWindow.Draw(particle.Drawable);
+            }
         }
     }
 }
