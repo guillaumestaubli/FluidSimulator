@@ -27,14 +27,24 @@ namespace FluidSimulator
             _renderWindow = new RenderWindow(vmRenderWindow, "C# - SFML - FluidSimulator - RenderWindow", Styles.Close, State.Windowed);
             _renderWindow.SetVerticalSyncEnabled(true);
             _renderWindow.Closed += CloseRenderWindow;
+            _renderWindow.MouseButtonReleased += MouseButtonReleased;
+            _renderWindow.MouseButtonPressed += MouseButtonPressed;
 
             _particles = new List<Particle>();
 
-            Particle part_test = new Particle(new Vector2f(100.0f, 100.0f));
-            part_test.Direction = Angle.FromDegrees(90.0f);
-            part_test.Velocity = 9.81f;
+            Particle part_left = new Particle(new Vector2f(100.0f, 100.0f));
+            part_left.Direction = Angle.FromDegrees(45.0f);
+            part_left.Velocity = 5.0f;
+            part_left.FillColor = Color.Red;
 
-            _particles.Add(part_test);
+            _particles.Add(part_left);
+
+            Particle part_right = new Particle(new Vector2f(500.0f, 100.0f));
+            part_right.Direction = Angle.FromDegrees(135.0f);
+            part_right.Velocity = 5.0f;
+            part_right.FillColor = Color.Blue;
+
+            _particles.Add(part_right);
         }
 
         public void Run(bool debug = false)
@@ -45,7 +55,7 @@ namespace FluidSimulator
             {
                 _renderWindow.DispatchEvents();
 
-                if(_clock.ElapsedMilliseconds >= Config.FRAME_DURATION)
+                if (_clock.ElapsedMilliseconds >= Config.FRAME_DURATION)
                 {
                     UpdateParticles();
 
@@ -65,9 +75,24 @@ namespace FluidSimulator
             _renderWindow.Close();
         }
 
+        private void MouseButtonReleased(object? sender, MouseButtonEventArgs e)
+        {
+            if (e.Button == Mouse.Button.Left)
+            {
+                Particle part = new Particle(new Vector2f(e.Position.X, e.Position.Y));
+
+                _particles.Add(part);
+            }
+        }
+
+        private void MouseButtonPressed(object? sender, MouseButtonEventArgs e)
+        {
+
+        }
+
         private void UpdateParticles()
         {
-            foreach(Particle part in _particles)
+            foreach (Particle part in _particles)
             {
                 Vector2f position = part.Position;
 
@@ -76,12 +101,55 @@ namespace FluidSimulator
                 position += move;
 
                 part.Position = position;
+
+                // detect collisions with border
+                if (part.Position.X - part.Radius < 0 || part.Position.X + part.Radius > Config.WINDOW_SIZE.X)
+                {
+                    Vector2f corrected_move = move;
+
+                    corrected_move.X *= -1.0f;
+
+                    part.Position -= move;
+                    part.Position += corrected_move;
+
+                    if (corrected_move.Y > 0) // go down
+                    {
+                        double angle = Math.Tanh(corrected_move.X / corrected_move.Y);
+
+
+                    }
+                    else if (corrected_move.Y < 0) // go up
+                    {
+
+                    }
+                }
+
+                if (part.Position.Y - part.Radius < 0 || part.Position.Y + part.Radius > Config.WINDOW_SIZE.Y)
+                {
+                    Vector2f corrected_move = move;
+
+                    corrected_move.Y *= -1.0f;
+
+                    part.Position -= move;
+                    part.Position += corrected_move;
+
+                    if (corrected_move.X > 0) // go right
+                    {
+
+                    }
+                    else if (corrected_move.X < 0) // go left
+                    {
+
+                    }
+                }
+
+                // detect collisions with other particles
             }
         }
 
         private void DrawParticles()
         {
-            foreach(Particle particle in _particles)
+            foreach (Particle particle in _particles)
             {
                 _renderWindow.Draw(particle.Drawable);
             }
